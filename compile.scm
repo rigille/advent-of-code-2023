@@ -1,0 +1,7 @@
+(import (chezscheme))
+(optimize-level 2)
+(generate-wpo-files #t)
+(compile-imported-libraries #t)
+(compile-program "./day01/main.scm")
+(compile-whole-program "./day01/main.wpo" (car (cdr (command-line))))
+(exit)
