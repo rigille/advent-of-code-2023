@@ -54,3 +54,10 @@
     ((_ m ((i1 e1) (i2 e2) ...) b1 b2 ...)
      ((monad-bind m) e1 (lambda (i1)
        (let-bind* m ([i2 e2] ...) b1 b2 ...))))))
+
+(define (sequence parsers)
+  (if (null? parsers)
+      (pure (list))
+      (let-bind* parser ((h (car parsers))
+			 (t (sequence (cdr parsers))))
+        (cons h t))))
