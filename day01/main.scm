@@ -1,4 +1,4 @@
-#!/usr/bin/scheme-script
+#!/usr/bin/env scheme-script
 (import (day01 solution)
         (chezscheme))
 (define program-directory (include "day01/prefix.ss"))
