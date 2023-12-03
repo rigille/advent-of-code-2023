@@ -1,6 +1,7 @@
 #!chezscheme
 (library (day01 solution)
-  (export sum-calibrations sum-written-out-calibrations)
+  (export sum-calibrations sum-written-out-calibrations
+          digit? substring?)
   (import (chezscheme))
   (define (digit? c)
     (and (char<=? #\0 c) (char<=? c #\9)))
