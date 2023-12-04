@@ -17,15 +17,20 @@
 
 (define parser (make-monad bind pure))
 
-(define (literal entry)
+(define (literal entry . value)
     (lambda (text cursor)
       (if (substring? text cursor entry 0)
-          (make-parser-success #t (+ cursor (string-length entry)))
+          (make-parser-success
+	    (if (null? value)
+	        #t
+		(car value))
+	    (+ cursor (string-length entry)))
           #f)))
 
 (define digit
     (lambda (text cursor)
-      (if (and (< cursor (string-length text)) (digit? (string-ref text cursor)))
+      (if (and (< cursor (string-length text))
+	       (digit? (string-ref text cursor)))
           (make-parser-success
             (char- (string-ref text cursor) #\0)
             (+ cursor 1))
@@ -55,9 +60,45 @@
      ((monad-bind m) e1 (lambda (i1)
        (let-bind* m ([i2 e2] ...) b1 b2 ...))))))
 
-(define (sequence parsers)
-  (if (null? parsers)
+(define (sequence . parsers) (if (null? parsers)
       (pure (list))
       (let-bind* parser ((h (car parsers))
-			 (t (sequence (cdr parsers))))
+			 (t (apply sequence (cdr parsers))))
         (cons h t))))
+
+(define (many1 parser)
+  (sequence (list parser (many parser))))
+
+(define (choice . parsers)
+  (lambda (text cursor)
+    (if (null? parsers)
+        #f
+        (let ((reply ((car parsers) text cursor)))
+	  (if (parser-success? reply)
+	      reply
+	      ((apply choice (cdr parsers)) text cursor))))))
+
+(define (maybe parser)
+  (lambda (text cursor)
+    (let ((reply (parser text cursor)))
+      (if (parser-success? reply)
+	  reply
+	  (make-parser-success '() text cursor)))))
+
+(define number
+  (let-bind* parser
+    ((digits (many digit)))
+    (fold-left (lambda (acc d) (+ (* 10 acc) d)) 0 digits)))
+
+(define example-game
+  "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green")
+(define-record-type ball (fields number color))
+(define parse-ball
+  (let-bind* parser
+    ((__ (literal " "))
+     (n number)
+     (__ (literal " "))
+     (color (choice (literal "blue" 'blue)
+                    (literal "red" 'red)
+                    (literal "green" 'green))))
+    (make-ball n color)))
